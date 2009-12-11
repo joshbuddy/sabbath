@@ -1,0 +1,20 @@
+= Sabbath
+
+REST interface to beanstalkd (or probably other queues at some point).
+
+== Usage
+
+  >> sabbath -h
+  
+  << Usage: sabbath [options]
+  << 
+  << Options:
+  <<     -p, --port[OPTIONAL]             Port (default: 11300)
+  <<     -h, --host[OPTIONAL]             Host (default: localhost)
+  <<     -P, --web-port[OPTIONAL]         Web port (default: 4848)
+  <<     -H, --web-host[OPTIONAL]         Web host (default: 0.0.0.0)
+  <<         --help                       Show this help message.
+  
+
+== Why?
+

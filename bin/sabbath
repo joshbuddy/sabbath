@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby -rubygems
+
+require File.join(File.dirname(__FILE__), '..', 'lib', 'sabbath')
+require 'optparse'
+
+options = {}
+options[:port] = 11300
+options[:host] = 'localhost'
+options[:web_port] = 4848
+options[:web_host] = '0.0.0.0'
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: sabbath [options]"
+
+  opts.separator ""
+  opts.separator "Options:"
+
+  opts.on("-p[OPTIONAL]", "--port", "Port (default: #{options[:port]})") do |v|
+    options[:port] = v
+  end
+
+  opts.on("-h[OPTIONAL]", "--host", "Host (default: #{options[:host]})") do |v|
+    options[:host] = v
+  end
+
+  opts.on("-P[OPTIONAL]", "--web-port", "Web port (default: #{options[:web_port]})") do |v|
+    options[:port] = v
+  end
+
+  opts.on("-H[OPTIONAL]", "--web-host", "Web host (default: #{options[:web_host]})") do |v|
+    options[:host] = v
+  end
+
+  opts.on_tail("-h", "--help", "Show this help message.") { puts opts; exit }
+end
+parser.parse!(ARGV)
+
+Sabbath.new(options).start

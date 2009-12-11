@@ -1,0 +1,173 @@
+<html>
+<head>
+<script src="http://www.google.com/jsapi"></script>
+<script>
+  // Load jQuery
+  google.load("jquery", "1.3.2");
+
+  google.setOnLoadCallback(function() {
+    $(document).ready(function() {
+      var base = 'http://localhost:4848';
+
+      function loadJob(force) {
+        if (force || $('#jobs div').length == 0) $('#jobs').html('waiting for job...');
+        if ($('#jobs div').length == 0) {
+        
+          
+          $.ajax({
+            type: "GET",
+            dataType: "jsonp",
+            url: base + "/default",
+          
+            async: true, /* If set to non-async, browser shows page as "Loading.."*/
+            cache: false,
+            timeout: 50000, /* Timeout in ms */
+
+            success: function (data, textStatus) {
+              // data could be xmlDoc, jsonObj, html, text, etc...
+              $('#jobs').html('<div id="' + data.id + '">' + data.body + '</div>');
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+              // typically only one of textStatus or errorThrown 
+              // will have info
+              alert("fail:" +textStatus);
+            }
+          });
+        }
+      }
+      
+      loadJob();
+      
+      $('#approve').click(function() {
+        if ($('#jobs div').length > 0) {
+          var id = $('#jobs div')[0].id;
+          
+          // do your approval here
+          
+          $.ajax({
+            type: "GET",
+            dataType: "jsonp",
+            url: base + "/default/" + id + "?_method=delete",
+
+            async: true, /* If set to non-async, browser shows page as "Loading.."*/
+            cache: false,
+            timeout: 50000, /* Timeout in ms */
+
+            success: function (data, textStatus) {
+              loadJob(true);
+              alert('Approved!');
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+              // typically only one of textStatus or errorThrown 
+              // will have info
+              alert("fail:" +textStatus);
+            }
+          });
+        } else {
+          alert('you have no jobs pending');
+        }
+      });
+
+      $('#reject').click(function() {
+        if ($('#jobs div').length > 0) {
+          var id = $('#jobs div')[0].id;
+
+          // do your rejection here
+
+          $.ajax({
+            type: "GET",
+            dataType: "jsonp",
+            url: base + "/default/" + id + "?_method=delete",
+
+            async: true, /* If set to non-async, browser shows page as "Loading.."*/
+            cache: false,
+            timeout: 50000, /* Timeout in ms */
+
+            success: function (data, textStatus) {
+              loadJob(true);
+              alert('Approved!');
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+              // typically only one of textStatus or errorThrown 
+              // will have info
+              alert("fail:" +textStatus);
+            }
+          });
+        } else {
+          alert('you have no jobs pending');
+        }
+      });
+
+      $('#defer').click(function() {
+        if ($('#jobs div').length > 0) {
+          var id = $('#jobs div')[0].id;
+
+          // do your rejection here
+
+          $.ajax({
+            type: "GET",
+            dataType: "jsonp",
+            url: base + "/default/" + id + "/release?_method=put",
+
+            async: true, /* If set to non-async, browser shows page as "Loading.."*/
+            cache: false,
+            timeout: 50000, /* Timeout in ms */
+
+            success: function (data, textStatus) {
+              loadJob(true);
+              alert('Approved!');
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+              // typically only one of textStatus or errorThrown 
+              // will have info
+              alert("fail:" +textStatus);
+            }
+          });
+        } else {
+          alert('you have no jobs pending');
+        }
+      });
+
+      $("#submit").submit(function(e) {
+        alert('sending!');
+        e.preventDefault();
+        $.ajax({
+          type: "GET",
+          dataType: "jsonp",
+          url: base + "/default",
+          data: {body: $('#body').val(), _method: 'post'},
+          async: true, /* If set to non-async, browser shows page as "Loading.."*/
+          cache: false,
+          timeout: 50000, /* Timeout in ms */
+
+          success: function (data, textStatus) {
+            alert('submitted new job');
+            loadJob();
+          },
+          error: function (XMLHttpRequest, textStatus, errorThrown) {
+            // typically only one of textStatus or errorThrown 
+            // will have info
+            alert("fail:" +textStatus);
+          }
+        });
+
+
+
+      });
+    });
+    
+  });
+
+</script>
+</head>
+<body>
+  <h1>Jobs</h1>
+  <div id="jobs"></div>
+  <input type="button" id="approve" value="Approve"><input type="button" id="reject" value="Reject"><input type="button" id="defer" value="Defer">
+  
+  <form id="submit">
+    <textarea id="body"></textarea><br>
+    <input type="submit" value="Submit">
+  </form>
+</body>
+</html>
