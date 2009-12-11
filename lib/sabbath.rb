@@ -1,7 +1,8 @@
 require 'thin'
 require 'rack'
-require '/Users/joshua/Development/usher/lib/usher'
+require 'usher'
 require 'json'
+require 'uuid'
 
 $LOAD_PATH << File.dirname(__FILE__)
 

@@ -14,46 +14,28 @@ class Sabbath
       
       def initialize(host, port)
         @host, @port = host, port
+        @conns = {}
       end
       
-      def connection
-        conn = EM::Beanstalk.new(:host => host, :port => port)
+      def connection(id, tube = 'default')
+        @conns[id] ||= EM::Beanstalk.new(:host => host, :port => port, :tube => tube, :retry_count => 0, :raise_on_disconnect => false)
       end
       
-      def get_latest_job(tube, timeout = nil)
-        conn = connection
-        conn.watch(tube) {
-          conn.reserve(timeout) { |job|
-            yield job
-          }
-        }
+      def get_latest_job(conn_id, tube, timeout = nil, &block)
+        connection(conn_id, tube).reserve(timeout, &block)
       end
       
-      def get_job(tube, id)
-        conn = connection
-        conn.watch(tube) {
-          conn.peek(id) { |job|
-            yield job
-          }
-        }
+      def get_job(conn_idtube, id, &block)
+        connection(conn_id, tube).peek(id, &block)
       end
       
-      def create_job(tube, body)
-        conn = connection
-        conn.use(tube) {
-          conn.put(tube, body) { |id|
-            yield id
-          }
-        }
+      def create_job(conn_id, tube, body, &block)
+        connection(conn_id, tube).put(body, &block)
       end
       
-      def delete_job(tube, id)
-        conn = connection
-        conn.use(tube) {
-          conn.delete(id) {
-            yield
-          }
-        }
+      def delete_job(conn_id, tube, id, &block)
+        puts "deleting job #{tube.inspect} #{id.inspect}"
+        connection(conn_id, tube).delete(id, &block)
       end
       
     end
