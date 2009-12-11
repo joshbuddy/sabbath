@@ -6,17 +6,24 @@ REST interface to beanstalkd (or probably other queues at some point).
 
   >> sabbath -h
   
-  << Usage: sabbath [options]
-  << 
-  << Options:
-  <<     -p, --port[OPTIONAL]             Port (default: 11300)
-  <<     -h, --host[OPTIONAL]             Host (default: localhost)
-  <<     -P, --web-port[OPTIONAL]         Web port (default: 4848)
-  <<     -H, --web-host[OPTIONAL]         Web host (default: 0.0.0.0)
-  <<         --help                       Show this help message.
-  
+  Usage: sabbath [options]
+   
+  Options:
+      -p, --port[OPTIONAL]             Port (default: 11300)
+      -h, --host[OPTIONAL]             Host (default: localhost)
+      -P, --web-port[OPTIONAL]         Web port (default: 4848)
+      -H, --web-host[OPTIONAL]         Web host (default: 0.0.0.0)
+      -R, --rackup[OPTIONAL]           Rackup file (optional)
+          --help                       Show this help message.
 == Why?
 
 This allows you to interface with beanstalk over normal HTTP calls. I've included a really simple example in the +examples+ directory. It consumes
 and pushes jobs onto a queue from jQuery.
 
+This provides the following routes:
+
+* /:tube             GET -- This lets you get the latest job. If no job is available, the connection will be held open until one becomes available.
+* /:tube/:id         GET -- This lets you get a job by id.
+* /:tube/:id/release PUT -- This lets you release a job back onto beanstalk.
+* /:tube/:id         DELETE -- This deletes a job from the queue.
+* /:tube             POST -- This lets you create a new job. The post parameter +body+ is expected.

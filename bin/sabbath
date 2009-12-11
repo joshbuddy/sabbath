@@ -31,7 +31,7 @@ parser = OptionParser.new do |opts|
     options[:host] = v
   end
 
-  opts.on("-R[OPTIONAL]", "--rackup", "Rackup file (default: #{options[:rackup]})") do |v|
+  opts.on("-R[OPTIONAL]", "--rackup", "Rackup file (optional)") do |v|
     options[:rackup] = v
   end
 
