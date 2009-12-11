@@ -4,7 +4,7 @@ module Thin
     def start
       raise ArgumentError, 'app required' unless @app
       
-      log   ">> Sabbath ---> connected to #{app.backend.name} on port #{app.backend.port}, host #{app.backend.host}"
+      log   ">> Sabbath ---> connected to #{app.name} on port #{app.port}, host #{app.host}"
       log   ">> Using Thin web server (v#{VERSION::STRING} codename #{VERSION::CODENAME})"
       debug ">> Debugging ON"
       trace ">> Tracing ON"
@@ -21,6 +21,30 @@ end
 class Sabbath
   class Server
 
+    class MethodOverride
+      HTTP_METHODS = %w(GET HEAD PUT POST DELETE OPTIONS)
+
+      METHOD_OVERRIDE_PARAM_KEY = "_method".freeze
+      HTTP_METHOD_OVERRIDE_HEADER = "HTTP_X_HTTP_METHOD_OVERRIDE".freeze
+
+      def initialize(app)
+        @app = app
+      end
+
+      def call(env)
+        request = Rack::Request.new(env)
+        query_params = Rack::Utils.parse_query(request.query_string)
+        method = query_params[METHOD_OVERRIDE_PARAM_KEY]
+        method = method.to_s.upcase
+        if HTTP_METHODS.include?(method)
+          env["rack.methodoverride.original_method"] = env["REQUEST_METHOD"]
+          env["REQUEST_METHOD"] = method
+        end
+
+        @app.call(env)
+      end
+    end
+    
     class DeferrableBody
       include EventMachine::Deferrable
 
@@ -53,11 +77,19 @@ class Sabbath
 
     AsyncResponse = [-1, {}, []].freeze
     
-    attr_reader :backend, :web_host, :web_port, :cookie_name
+    class StatsProvider
+      attr_reader :name, :host, :port
+      def initialize(app, name, host, port)
+        @app, @name, @host, @port = app, name, host, port
+      end
+      def call(env); @app.call(env); end
+    end
     
-    def initialize(backend, web_host, web_port, cookie_name = 'sabbath_id')
+    attr_reader :backend, :web_host, :web_port, :cookie_name, :rackup
+    
+    def initialize(backend, web_host, web_port, rackup, cookie_name = 'sabbath_id')
       @backend = backend
-      @web_host, @web_port, @cookie_name = web_host, web_port, cookie_name
+      @web_host, @web_port, @cookie_name, @rackup = web_host, web_port, cookie_name, rackup
       @router = Usher.new(:request_methods => [:request_method], :delimiters => ['/', '.'])
       @router.add_route('/:tube',                   :conditions => {:request_method => 'GET'})      .name(:get_latest_job)
       @router.add_route('/:tube/:job_id',           :conditions => {:request_method => 'GET'})      .name(:get_job)
@@ -66,13 +98,21 @@ class Sabbath
       @router.add_route('/:tube/:job_id/release',   :conditions => {:request_method => 'PUT'})      .name(:release_job)
     end
     
+    def builder
+      builder = Rack::Builder.new
+      builder.use(StatsProvider, backend.name, backend.host, backend.port)
+      builder.instance_eval(File.read(rackup)) if rackup
+      builder.use(MethodOverride)
+      builder.run(self)
+      builder
+    end
+    
     def call(env)
+      p env
       request = Rack::Request.new(env)
       query_params = Rack::Utils.parse_query(request.query_string)
-      env['REQUEST_METHOD'] = query_params['_method'].upcase if query_params['_method']
       
       id = request.cookies[cookie_name] || UUID.new.generate
-      p id
       common_response_headers = {'Content-Type' => 'text/javascript'}
       
       common_response_headers['Set-cookie'] = Rack::Utils.build_query(cookie_name => id) unless request.cookies[cookie_name]
@@ -85,16 +125,15 @@ class Sabbath
         when nil
           env['async.callback'].call([404, {}, []])
         else
-          params = response.params_as_hash
+          params = Hash[response.params]
+          p response.path.route.named
+          p params
           case response.path.route.named
           when :get_latest_job
-            puts "latest job..."
             env['async.callback'].call([200, common_response_headers, body])
             backend.get_latest_job(id, params[:tube], params['timeout']) {|job|
-              puts "sending job.body: #{job.body}"
               body.succeed_with(:id => job.id, :body => job.body)
             }.on_error {|message|
-              puts "message.. #{message}"
               body.succeed_with(:error => message)
             }
           when :get_job
@@ -132,9 +171,8 @@ class Sabbath
     end
     
     def start
-      @server = self
       EM.run do
-        Thin::Server.start(web_host, web_port, self)
+        Thin::Server.start(web_host, web_port, builder.to_app)
       end      
     end
   end

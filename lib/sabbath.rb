@@ -19,7 +19,7 @@ class Sabbath
   end
   
   def start
-    Server.new(@backend, options[:web_host], options[:web_port]).start
+    Server.new(@backend, options[:web_host], options[:web_port], options[:rackup]).start
   end
   
 end

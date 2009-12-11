@@ -47,7 +47,7 @@
           $.ajax({
             type: "GET",
             dataType: "jsonp",
-            url: base + "/default/" + id + "?_method=delete",
+            url: base + "/default/" + id + "?_method=DELETE",
 
             async: true, /* If set to non-async, browser shows page as "Loading.."*/
             cache: false,
@@ -77,7 +77,7 @@
           $.ajax({
             type: "GET",
             dataType: "jsonp",
-            url: base + "/default/" + id + "?_method=delete",
+            url: base + "/default/" + id + "?_method=DELETE",
 
             async: true, /* If set to non-async, browser shows page as "Loading.."*/
             cache: false,
@@ -107,7 +107,7 @@
           $.ajax({
             type: "GET",
             dataType: "jsonp",
-            url: base + "/default/" + id + "/release?_method=put",
+            url: base + "/default/" + id + "/release?_method=PUT",
 
             async: true, /* If set to non-async, browser shows page as "Loading.."*/
             cache: false,
@@ -135,7 +135,7 @@
           type: "GET",
           dataType: "jsonp",
           url: base + "/default",
-          data: {body: $('#body').val(), _method: 'post'},
+          data: {body: $('#body').val(), _method: 'POST'},
           async: true, /* If set to non-async, browser shows page as "Loading.."*/
           cache: false,
           timeout: 50000, /* Timeout in ms */
